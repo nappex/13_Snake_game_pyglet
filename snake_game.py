@@ -25,8 +25,14 @@ def move_snake_interval(dt):
 
     x, y = game_status.snake_coordinates[-1]
     if (1, 0) in game_status.snake_course:
-        x += dt * SIZE_POLE
-        game_status.snake_coordinates.append((x, y))
+        x += SIZE_POLE
+    elif (-1, 0) in game_status.snake_course:
+        x += -abs(SIZE_POLE)
+    elif (0, 1) in game_status.snake_course:
+        y += SIZE_POLE
+    elif (0, -1) in game_status.snake_course:
+        y += -abs(SIZE_POLE)
+    game_status.snake_coordinates.append((x, y))
     del game_status.snake_coordinates[0]
 
     for i, part in enumerate(snake_body):
@@ -83,7 +89,7 @@ game_window.push_handlers(
     on_key_press=move_snake_onkey,
 )
 
-pyglet.clock.schedule_interval(move_snake_interval, 1/10)
+pyglet.clock.schedule_interval(move_snake_interval, 1/5)
 
 if __name__ == "__main__":
     pyglet.app.run()
