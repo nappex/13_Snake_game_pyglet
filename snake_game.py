@@ -17,6 +17,7 @@ class Game_status:
         self.foods_coordinates = []
         self.snake_body = []
         self.snake_tiles = {}
+        self.label = None
         sequence_paths_imgs = TILES_DIRECTORY.glob("*.png")
         for path in sequence_paths_imgs:
             self.snake_tiles[path.stem] = pyglet.image.load(path)
@@ -189,6 +190,20 @@ def draw_window():
     game_window.clear()
     pyglet.gl.glClear(pyglet.gl.GL_COLOR_BUFFER_BIT)
     batch.draw()
+    if game_status.label is not None:
+        game_status.label.draw()
+
+
+def create_text(string, font_size, x, y):
+    label = pyglet.text.Label(string,
+                              font_name='Times New Roman',
+                              font_size=font_size,
+                              color=((255, 255, 255, 255)),
+                              x=x,
+                              y=y,
+                              anchor_x='center', anchor_y='center',
+                              )
+    game_status.label = label
 
 
 def create_food(batch):
@@ -199,7 +214,7 @@ def create_food(batch):
         y_food = randrange(32, HEIGHT, 64)
 
     game_status.foods_coordinates.append((x_food, y_food))
-    game_status.foods.append(pyglet.sprite.Sprite(img_food,
+    game_status.foods.append(pyglet.sprite.Sprite(img_health_food,
                                                   x_food,
                                                   y_food,
                                                   batch=batch))
@@ -213,11 +228,6 @@ def eat_food(batch):
             x += -x_course * SIZE_IMG
             y += -y_course * SIZE_IMG
             game_status.snake_coordinates.insert(0, (x, y))
-            game_status.snake_body.insert(0,
-                                          pyglet.sprite.Sprite(img_snake,
-                                                               x,
-                                                               y,
-                                                               batch=batch))
             game_status.foods_coordinates.clear()
             game_status.foods.clear()
 
@@ -252,7 +262,12 @@ def move_snake_interval(dt):
     # if snake hit itself function will stop
     if (x, y) in game_status.snake_coordinates:
         pyglet.clock.unschedule(move_snake_interval)
-        print("narazil jsi do hada")
+        create_text('GAME OVER you hit snake body !',
+                    24,
+                    game_window.width//2,
+                    game_window.height - 24,
+                    )
+
     else:
         game_status.snake_coordinates.append((x, y))
         del game_status.snake_coordinates[0]
@@ -279,9 +294,8 @@ def move_snake_onkey(key, modifikator):
         game_status.snake_course = (-1, 0)
 
 
-# img_snake = pyglet.image.load("green_rectangle.png")
-img_food = pyglet.image.load("red_apple.png")
-center_image(img_food)
+img_health_food = pyglet.image.load("red_apple.png")
+center_image(img_health_food)
 batch = pyglet.graphics.Batch()
 game_status = Game_status(batch)
 img_snake = game_status.snake_tiles["tail-head"]
