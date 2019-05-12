@@ -13,12 +13,14 @@ class Game_status:
     def __init__(self, batch):
         self.lifes = 1
         self.score = 0
+        self.speed = 1/4
+        self.speed_coeficient = 1/4
         self.snake_coordinates = [(32, 32), (96, 32), (160, 32)]
         self.snake_course = (1, 0)
-        self.health_foods = []
-        self.health_foods_coordinates = []
-        self.poison_foods = []
-        self.poison_foods_coordinates = []
+        self.health_food = []
+        self.health_coordinates = []
+        self.poison_food = []
+        self.poison_coordinates = []
         self.compost = []
         self.compost_coordinates = []
         self.snake_body = []
@@ -195,6 +197,10 @@ def create_snake(batch):
 
 
 def draw_window():
+    """
+    Function draws objects on screen.
+    Labels and pictures.
+    """
     game_window.clear()
     pyglet.gl.glClear(pyglet.gl.GL_COLOR_BUFFER_BIT)
     batch.draw()
@@ -208,46 +214,61 @@ def draw_window():
 
 
 def create_compost(dt, batch):
-    x_compost = randrange(32, WIDTH, 64)
-    y_compost = randrange(32, HEIGHT, 64)
-    while (x_compost, y_compost) in game_status.snake_coordinates \
-            or (x_compost, y_compost) in game_status.health_foods_coordinates\
-            or (x_compost, y_compost) in game_status.poison_foods_coordinates:
+    """
+    Function create picture of compost with random coordinates.
+    Finally trigger function delete_compost.
+    """
+    if not game_status.compost_coordinates:
         x_compost = randrange(32, WIDTH, 64)
         y_compost = randrange(32, HEIGHT, 64)
+        while (x_compost, y_compost) in game_status.snake_coordinates\
+                or (x_compost, y_compost) in game_status.health_coordinates\
+                or (x_compost, y_compost) in game_status.poison_coordinates:
+            x_compost = randrange(32, WIDTH, 64)
+            y_compost = randrange(32, HEIGHT, 64)
 
-    game_status.compost_coordinates.append((x_compost, y_compost))
-    game_status.compost.append(pyglet.sprite.Sprite(img_compost,
-                                                    x_compost,
-                                                    y_compost,
-                                                    batch=batch))
+        game_status.compost_coordinates.append((x_compost, y_compost))
+        game_status.compost.append(pyglet.sprite.Sprite(img_compost,
+                                                        x_compost,
+                                                        y_compost,
+                                                        batch=batch))
+
+        pyglet.clock.schedule_once(delete_compost, 3)
 
 
 def create_food(dt, batch):
+    """
+    Function create health, poison food with random coordinates.
+    """
     x_food = randrange(32, WIDTH, 64)
     y_food = randrange(32, HEIGHT, 64)
     while (x_food, y_food) in game_status.snake_coordinates \
-            or (x_food, y_food) in game_status.health_foods_coordinates\
-            or (x_food, y_food) in game_status.poison_foods_coordinates:
+            or (x_food, y_food) in game_status.health_coordinates\
+            or (x_food, y_food) in game_status.poison_coordinates\
+            or (x_food, y_food) in game_status.compost_coordinates:
         x_food = randrange(32, WIDTH, 64)
         y_food = randrange(32, HEIGHT, 64)
 
     if choice((True, False)):
-        game_status.health_foods_coordinates.append((x_food, y_food))
-        game_status.health_foods.append(pyglet.sprite.Sprite(img_health_food,
-                                                             x_food,
-                                                             y_food,
-                                                             batch=batch))
+        game_status.health_coordinates.append((x_food, y_food))
+        game_status.health_food.append(pyglet.sprite.Sprite(img_health_food,
+                                                            x_food,
+                                                            y_food,
+                                                            batch=batch))
     else:
-        game_status.poison_foods_coordinates.append((x_food, y_food))
-        game_status.poison_foods.append(pyglet.sprite.Sprite(img_poison_food,
-                                                             x_food,
-                                                             y_food,
-                                                             batch=batch))
+        game_status.poison_coordinates.append((x_food, y_food))
+        game_status.poison_food.append(pyglet.sprite.Sprite(img_poison_food,
+                                                            x_food,
+                                                            y_food,
+                                                            batch=batch))
 
 
 def eat_food(batch):
-    for num, coordinates in enumerate(game_status.health_foods_coordinates):
+    """
+    Function describes what happened when snake eats something
+    (health, poison food or composter).
+    """
+    for num, coordinates in enumerate(game_status.health_coordinates):
         if game_status.snake_coordinates[-1] == coordinates:
             x_0, y_0 = game_status.snake_coordinates[0]
             x_1, y_1 = game_status.snake_coordinates[1]
@@ -257,26 +278,40 @@ def eat_food(batch):
             game_status.snake_coordinates.insert(0, (x_0, y_0))
             game_status.lifes += 1
             game_status.score += 1
-            del game_status.health_foods_coordinates[num]
-            del game_status.health_foods[num]
+            del game_status.health_coordinates[num]
+            del game_status.health_food[num]
 
-    for num, coordinates in enumerate(game_status.poison_foods_coordinates):
+    for num, coordinates in enumerate(game_status.poison_coordinates):
         if game_status.snake_coordinates[-1] == coordinates:
             game_status.lifes -= 4
-            del game_status.poison_foods_coordinates[num]
-            del game_status.poison_foods[num]
+            del game_status.poison_coordinates[num]
+            del game_status.poison_food[num]
 
-    for coordinates in game_status.compost_coordinates:
-        if game_status.snake_coordinates[-1] == coordinates:
-            for num in range((len(game_status.poison_foods))//2):
-                del game_status.poison_foods_coordinates[num]
-                del game_status.poison_foods[num]
+    if game_status.snake_coordinates[-1] in game_status.compost_coordinates:
+        for num in range((len(game_status.poison_food))//3):
+            del game_status.poison_coordinates[num]
+            del game_status.poison_food[num]
 
-            game_status.compost_coordinates.clear()
-            game_status.compost.clear()
+        game_status.speed_coeficient *= 4/5
+        game_status.speed = game_status.speed_coeficient
+        print(game_status.speed)
+        game_status.compost_coordinates.clear()
+        game_status.compost.clear()
+        pyglet.clock.schedule_once(create_compost, 50, batch)
 
 
-def move_snake_interval(dt):
+def delete_compost(dt):
+    """
+    Function delete pciture of composter after 3 seconds.
+    Time for deleting is defined in create_compost function.
+    """
+    if game_status.compost_coordinates and game_status.compost:
+        game_status.compost_coordinates.clear()
+        game_status.compost.clear()
+        pyglet.clock.schedule_once(create_compost, 50, batch)
+
+
+def move_snake():
     """
     Function which set coordinates of snake.
     Also check position of snake and whenever snake is
@@ -316,8 +351,10 @@ def move_snake_interval(dt):
                                                 anchor_y='center',
                                                 )
 
-        pyglet.clock.unschedule(move_snake_interval)
+        pyglet.clock.unschedule(move_interval)
         pyglet.clock.unschedule(create_food)
+        pyglet.clock.unschedule(create_compost)
+    # if your lifes are < than 1 game over
     elif game_status.lifes < 1:
         game_status.label_game_over = pyglet.text.Label(
                                                 "GAME OVER: No lifes !",
@@ -330,10 +367,11 @@ def move_snake_interval(dt):
                                                 anchor_y='center',
                                                 )
 
-        pyglet.clock.unschedule(move_snake_interval)
+        pyglet.clock.unschedule(move_interval)
         pyglet.clock.unschedule(create_food)
         pyglet.clock.unschedule(create_compost)
 
+    # otherwise game continue normally
     else:
         game_status.snake_coordinates.append((x, y))
         del game_status.snake_coordinates[0]
@@ -342,7 +380,8 @@ def move_snake_interval(dt):
         for i, sprite in enumerate(game_status.snake_body):
             sprite.x, sprite.y = game_status.snake_coordinates[i]
 
-    game_status.label_lifes = pyglet.text.Label("x "+str(game_status.lifes),
+    # Label for health
+    game_status.label_lifes = pyglet.text.Label("x " + str(game_status.lifes),
                                                 font_name='Times New Roman',
                                                 font_size=18,
                                                 color=((255, 255, 255, 255)),
@@ -352,8 +391,9 @@ def move_snake_interval(dt):
                                                 anchor_y='center',
                                                 )
 
+    # Label for score
     game_status.label_score = pyglet.text.Label(
-                                            "SCORE: "+str(game_status.score),
+                                            "SCORE: " + str(game_status.score),
                                             font_name='Times New Roman',
                                             font_size=18,
                                             color=((255, 255, 255, 255)),
@@ -364,7 +404,20 @@ def move_snake_interval(dt):
                                                 )
 
 
+def move_interval(dt):
+    """
+    This function change speed of frequency of game = speed of snake.
+    """
+    game_status.speed -= dt
+    if game_status.speed < 0:
+        game_status.speed = game_status.speed_coeficient
+        move_snake()
+
+
 def move_snake_onkey(key, modifikator):
+    """
+    control snake with keyboard arrows
+    """
     if key == pyglet.window.key.UP:
         game_status.snake_course = (0, 1)
     if key == pyglet.window.key.DOWN:
@@ -398,9 +451,10 @@ game_window.push_handlers(
     on_key_press=move_snake_onkey,
 )
 
-pyglet.clock.schedule_interval(move_snake_interval, 1/4)
+pyglet.clock.schedule_interval(move_interval, 1/30)
 pyglet.clock.schedule_interval(create_food, 4, batch)
-pyglet.clock.schedule_interval(create_compost, 80, batch)
+pyglet.clock.schedule_once(create_compost, 50, batch)
+
 
 if __name__ == "__main__":
     pyglet.app.run()
