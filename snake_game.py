@@ -32,6 +32,161 @@ class Game_status:
         for path in sequence_paths_imgs:
             self.snake_tiles[path.stem] = pyglet.image.load(path)
 
+    def create_snake(self, batch):
+        """
+        Method create GUI of snake body with special pictures
+        saved in snake_tiles
+        """
+        self.snake_body.clear()
+        for num, coordinates in enumerate(self.snake_coordinates):
+            x, y = coordinates
+
+            # this part create key for tail
+            if num == 0:
+                next_x, next_y = self.snake_coordinates[num + 1]
+                key_1 = "tail"
+
+                if next_x > x:
+                    if abs(next_x - x) == SIZE_IMG:
+                        key_2 = "right"
+                    else:
+                        key_2 = "left"
+                elif next_x < x:
+                    if abs(next_x - x) == SIZE_IMG:
+                        key_2 = "left"
+                    else:
+                        key_2 = "right"
+                elif next_y > y:
+                    if abs(next_y - y) == SIZE_IMG:
+                        key_2 = "top"
+                    else:
+                        key_2 = "bottom"
+                elif next_y < y:
+                    if abs(next_y - y) == SIZE_IMG:
+                        key_2 = "bottom"
+                    else:
+                        key_2 = "top"
+
+            # this part create key for head of snake
+            elif num == len(self.snake_coordinates) - 1:
+                previous_x, previous_y = self.snake_coordinates[num - 1]
+                key_2 = "tongue"
+
+                if previous_x > x:
+                    if abs(previous_x - x) == SIZE_IMG:
+                        key_1 = "right"
+                    else:
+                        key_1 = "left"
+                elif previous_x < x:
+                    if abs(previous_x - x) == SIZE_IMG:
+                        key_1 = "left"
+                    else:
+                        key_1 = "right"
+                elif previous_y > y:
+                    if abs(previous_y - y) == SIZE_IMG:
+                        key_1 = "top"
+                    else:
+                        key_1 = "bottom"
+                elif previous_y < y:
+                    if abs(previous_y - y) == SIZE_IMG:
+                        key_1 = "bottom"
+                    else:
+                        key_1 = "top"
+
+            # this part create key for rest of body between tail and head
+            else:
+                next_x, next_y = self.snake_coordinates[num + 1]
+                previous_x, previous_y = self.snake_coordinates[num - 1]
+
+                # this part create key for straight part of
+                # snake body (up or down)
+                if previous_x == x and next_x == x:
+                    key_1 = "top"
+                    key_2 = "bottom"
+
+                # this part create key for straight part
+                # of snake body(left or right)
+                elif previous_y == y and next_y == y:
+                    key_1 = "left"
+                    key_2 = "right"
+
+                # this part create key for corner of snake
+                else:
+                    if previous_y == y and previous_x < x:
+                        if abs(previous_x - x) == SIZE_IMG:
+                            key_1 = "left"
+                        else:
+                            key_1 = "right"
+
+                        if next_y > y:
+                            if abs(next_y - y) == SIZE_IMG:
+                                key_2 = "top"
+                            else:
+                                key_2 = "bottom"
+                        elif next_y < y:
+                            if abs(next_y - y) == SIZE_IMG:
+                                key_2 = "bottom"
+                            else:
+                                key_2 = "top"
+
+                    elif previous_y == y and previous_x > x:
+                        if abs(previous_x - x) == SIZE_IMG:
+                            key_1 = "right"
+                        else:
+                            key_1 = "left"
+
+                        if next_y > y:
+                            if abs(next_y - y) == SIZE_IMG:
+                                key_2 = "top"
+                            else:
+                                key_2 = "bottom"
+                        elif next_y < y:
+                            if abs(next_y - y) == SIZE_IMG:
+                                key_2 = "bottom"
+                            else:
+                                key_2 = "top"
+                    elif previous_x == x and previous_y < y:
+                        if abs(previous_y - y) == SIZE_IMG:
+                            key_1 = "bottom"
+                        else:
+                            key_1 = "top"
+
+                        if next_x > x:
+                            if abs(next_x - x) == SIZE_IMG:
+                                key_2 = "right"
+                            else:
+                                key_2 = "left"
+                        elif next_x < x:
+                            if abs(next_x - x) == SIZE_IMG:
+                                key_2 = "left"
+                            else:
+                                key_2 = "right"
+
+                    elif previous_x == x and previous_y > y:
+                        if abs(previous_y - y) == SIZE_IMG:
+                            key_1 = "top"
+                        else:
+                            key_1 = "bottom"
+
+                        if next_x > x:
+                            if abs(next_x - x) == SIZE_IMG:
+                                key_2 = "right"
+                            else:
+                                key_2 = "left"
+                        elif next_x < x:
+                            if abs(next_x - x) == SIZE_IMG:
+                                key_2 = "left"
+                            else:
+                                key_2 = "right"
+
+            # there I create the whole key for find the right picture in dict
+            st_img = self.snake_tiles[key_1 + "-" + key_2]
+            # last part create sprite
+            self.snake_body.append(pyglet.sprite.Sprite(st_img,
+                                                        x,
+                                                        y,
+                                                        batch=batch))
+
 
 game_window = pyglet.window.Window(width=WIDTH, height=HEIGHT)
 
@@ -40,160 +195,6 @@ def center_image(image):
     """Sets an image's anchor point to its center"""
     image.anchor_x = image.width // 2
     image.anchor_y = image.height // 2
-
-
-def create_snake(batch):
-    """
-    function create GUI of snake body with special pictures
-    saved in snake_tiles
-    """
-    game_status.snake_body.clear()
-    for num, coordinates in enumerate(game_status.snake_coordinates):
-        x, y = coordinates
-
-        # this part create key for tail
-        if num == 0:
-            next_x, next_y = game_status.snake_coordinates[num + 1]
-            key_1 = "tail"
-
-            if next_x > x:
-                if abs(next_x - x) == SIZE_IMG:
-                    key_2 = "right"
-                else:
-                    key_2 = "left"
-            elif next_x < x:
-                if abs(next_x - x) == SIZE_IMG:
-                    key_2 = "left"
-                else:
-                    key_2 = "right"
-            elif next_y > y:
-                if abs(next_y - y) == SIZE_IMG:
-                    key_2 = "top"
-                else:
-                    key_2 = "bottom"
-            elif next_y < y:
-                if abs(next_y - y) == SIZE_IMG:
-                    key_2 = "bottom"
-                else:
-                    key_2 = "top"
-
-        # this part create key for head of snake
-        elif num == len(game_status.snake_coordinates) - 1:
-            previous_x, previous_y = game_status.snake_coordinates[num - 1]
-            key_2 = "tongue"
-
-            if previous_x > x:
-                if abs(previous_x - x) == SIZE_IMG:
-                    key_1 = "right"
-                else:
-                    key_1 = "left"
-            elif previous_x < x:
-                if abs(previous_x - x) == SIZE_IMG:
-                    key_1 = "left"
-                else:
-                    key_1 = "right"
-            elif previous_y > y:
-                if abs(previous_y - y) == SIZE_IMG:
-                    key_1 = "top"
-                else:
-                    key_1 = "bottom"
-            elif previous_y < y:
-                if abs(previous_y - y) == SIZE_IMG:
-                    key_1 = "bottom"
-                else:
-                    key_1 = "top"
-
-        # this part create key for rest of body between tail and head
-        else:
-            next_x, next_y = game_status.snake_coordinates[num + 1]
-            previous_x, previous_y = game_status.snake_coordinates[num - 1]
-
-            # this part create key for straight part of snake body (up or down)
-            if previous_x == x and next_x == x:
-                key_1 = "top"
-                key_2 = "bottom"
-
-            # this part create key for straight part ofsnakebody(left or right)
-            elif previous_y == y and next_y == y:
-                key_1 = "left"
-                key_2 = "right"
-
-            # this part create key for corner of snake
-            else:
-                if previous_y == y and previous_x < x:
-                    if abs(previous_x - x) == SIZE_IMG:
-                        key_1 = "left"
-                    else:
-                        key_1 = "right"
-
-                    if next_y > y:
-                        if abs(next_y - y) == SIZE_IMG:
-                            key_2 = "top"
-                        else:
-                            key_2 = "bottom"
-                    elif next_y < y:
-                        if abs(next_y - y) == SIZE_IMG:
-                            key_2 = "bottom"
-                        else:
-                            key_2 = "top"
-
-                elif previous_y == y and previous_x > x:
-                    if abs(previous_x - x) == SIZE_IMG:
-                        key_1 = "right"
-                    else:
-                        key_1 = "left"
-
-                    if next_y > y:
-                        if abs(next_y - y) == SIZE_IMG:
-                            key_2 = "top"
-                        else:
-                            key_2 = "bottom"
-                    elif next_y < y:
-                        if abs(next_y - y) == SIZE_IMG:
-                            key_2 = "bottom"
-                        else:
-                            key_2 = "top"
-                elif previous_x == x and previous_y < y:
-                    if abs(previous_y - y) == SIZE_IMG:
-                        key_1 = "bottom"
-                    else:
-                        key_1 = "top"
-
-                    if next_x > x:
-                        if abs(next_x - x) == SIZE_IMG:
-                            key_2 = "right"
-                        else:
-                            key_2 = "left"
-                    elif next_x < x:
-                        if abs(next_x - x) == SIZE_IMG:
-                            key_2 = "left"
-                        else:
-                            key_2 = "right"
-
-                elif previous_x == x and previous_y > y:
-                    if abs(previous_y - y) == SIZE_IMG:
-                        key_1 = "top"
-                    else:
-                        key_1 = "bottom"
-
-                    if next_x > x:
-                        if abs(next_x - x) == SIZE_IMG:
-                            key_2 = "right"
-                        else:
-                            key_2 = "left"
-                    elif next_x < x:
-                        if abs(next_x - x) == SIZE_IMG:
-                            key_2 = "left"
-                        else:
-                            key_2 = "right"
-
-        # there I create the whole key for find the right picture in dict
-        st_img = game_status.snake_tiles[key_1 + "-" + key_2]
-        # last part create sprite
-        game_status.snake_body.append(pyglet.sprite.Sprite(st_img,
-                                                           x,
-                                                           y,
-                                                           batch=batch))
 
 
 def draw_window():
@@ -376,7 +377,7 @@ def move_snake():
         game_status.snake_coordinates.append((x, y))
         del game_status.snake_coordinates[0]
         eat_food(batch)
-        create_snake(batch)
+        game_status.create_snake(batch)
         for i, sprite in enumerate(game_status.snake_body):
             sprite.x, sprite.y = game_status.snake_coordinates[i]
 
